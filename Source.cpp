@@ -38,6 +38,8 @@ public:
 
 	void free();
 
+	void setColor(Uint8 red, Uint8 green, Uint8 blue);
+
 	void render(int x, int y, SDL_Rect* clip = NULL);
 
 	int getWidth();
@@ -94,6 +96,9 @@ LTexture gBackgroundTexture;
 //Scene sprites
 SDL_Rect gSpriteClips[4];
 LTexture gSpriteSheetTexture;
+
+//Modulated texture
+LTexture gModulatedTexture;
 
 LTexture::LTexture()
 {
@@ -152,6 +157,11 @@ void LTexture::free()
 		mWidth = 0;
 		mHeight = 0;
 	}
+}
+
+void LTexture::setColor(Uint8 red, Uint8 green, Uint8 blue)
+{
+	SDL_SetTextureColorMod(mTexture, red, green, blue);
 }
 
 void LTexture::render(int x, int y, SDL_Rect* clip)
@@ -259,6 +269,10 @@ bool loadMedia() {
 		printf("Failed to load sprite sheet texture!\n");
 		return false;
 	}
+	//Load modulated texture
+	if (!gModulatedTexture.loadFromFile("colors.png")){
+		printf("Go fuck yourself, go fuck yourself, please go go fuck yourself");
+	}
 	else
 	{
 		//Set top left sprite
@@ -285,6 +299,8 @@ bool loadMedia() {
 		gSpriteClips[3].w = 100;
 		gSpriteClips[3].h = 100;
 	}
+
+	
 
 
 	return (checkLoaded(gKeyPressSurfaces[KEY_PRESS_SURFACE_UP]) && checkLoaded(gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN]) && checkLoaded(gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT]) && checkLoaded(gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT]));
@@ -387,11 +403,17 @@ int main(int argc, char* args[]) {
 
 	SDL_Event e;
 
+	Uint8 r = 255;
+	Uint8 g = 255;
+	Uint8 b = 255;
+
 	gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
 	while (!quit)
 	{
 
 		bool isTexture = false; 
+		bool isFuckingAroundWithColors = false;
+
 		while (SDL_PollEvent(&e) != 0)
 			if (e.type == SDL_QUIT)
 				quit = true;
@@ -504,6 +526,12 @@ int main(int argc, char* args[]) {
 						SDL_RenderPresent(gRenderer);
 
 						break;
+
+
+					case SDLK_r:
+						isFuckingAroundWithColors = true;
+						r += 32;
+
 					default:
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
@@ -519,6 +547,18 @@ int main(int argc, char* args[]) {
 						SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &stretchRect); 
 						SDL_UpdateWindowSurface(gWindow);
 					}
+
+					if (isFuckingAroundWithColors) {
+						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+						SDL_RenderClear(gRenderer);
+
+						gModulatedTexture.setColor(r, g, b);
+						gModulatedTexture.render(0, 0);
+
+						SDL_RenderPresent(gRenderer);
+					}
+
+					
 				}
 	}
 	close();
