@@ -108,6 +108,11 @@ LTexture gModulatedTexture;
 LTexture gModulatedAlphaTexture;
 LTexture gBackgroundAlphaTexture;
 
+//animation Stuff
+const int WALKING_ANIMATION_FRAMES = 4;
+SDL_Rect gSpriteClipsAnim[WALKING_ANIMATION_FRAMES];
+LTexture gSpriteSheetAnimTexture;
+
 LTexture::LTexture()
 {
 	mTexture = NULL;
@@ -227,7 +232,7 @@ bool init() {
 			return false;
 		}
 		else {
-			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 			if (gRenderer == NULL)
 			{
 				printf("It shouldn't be NULL");
@@ -243,7 +248,7 @@ bool init() {
 				return false;
 			}
 			else
-			gScreenSurface = SDL_GetWindowSurface(gWindow);
+				gScreenSurface = SDL_GetWindowSurface(gWindow);
 		}
 	}
 	return true;
@@ -289,27 +294,6 @@ bool loadMedia() {
 		printf("Failed to load sprite sheet texture!\n");
 		return false;
 	}
-	//Load modulated texture
-	if (!gModulatedAlphaTexture.loadFromFile("colors.png")){
-		printf("Go fuck yourself, go fuck yourself, please go go fuck yourself");
-	}
-	if (!gModulatedAlphaTexture.loadFromFile("fadeout.png"))
-	{
-		printf("Failed to load front texture!\n");
-		return false;
-	}
-	else
-	{
-		//Set standard alpha blending
-		gModulatedAlphaTexture.setBlendMode(SDL_BLENDMODE_BLEND);
-	}
-
-	//Load background texture
-	if (!gBackgroundAlphaTexture.loadFromFile("fadein.png"))
-	{
-		printf("Failed to load background texture!\n");
-		return false;
-	}
 	else
 	{
 		//Set top left sprite
@@ -336,8 +320,60 @@ bool loadMedia() {
 		gSpriteClips[3].w = 100;
 		gSpriteClips[3].h = 100;
 	}
+	//Load modulated texture
+	if (!gModulatedAlphaTexture.loadFromFile("colors.png")) {
+		printf("Go fuck yourself, go fuck yourself, please go go fuck yourself");
+	}
+	if (!gModulatedAlphaTexture.loadFromFile("fadeout.png"))
+	{
+		printf("Failed to load front texture!\n");
+		return false;
+	}
+	else
+	{
+		//Set standard alpha blending
+		gModulatedAlphaTexture.setBlendMode(SDL_BLENDMODE_BLEND);
+	}
 
-	
+	//Load background texture
+	if (!gBackgroundAlphaTexture.loadFromFile("fadein.png"))
+	{
+		printf("Failed to load background texture!\n");
+		return false;
+	}
+
+
+	//Animation time
+	if (!gSpriteSheetAnimTexture.loadFromFile("anim.png"))
+	{
+		printf("Je sais que ça faisait très longtemps mais il semblerait que nous ayons sous les yeux un autre message d'erreur de qualité");
+		return false;
+	}
+	else
+	{
+		gSpriteClipsAnim[0].x = 0;
+		gSpriteClipsAnim[0].y = 0;
+		gSpriteClipsAnim[0].w = 64;
+		gSpriteClipsAnim[0].h = 205;
+
+		gSpriteClipsAnim[1].x = 64;
+		gSpriteClipsAnim[1].y = 0;
+		gSpriteClipsAnim[1].w = 64;
+		gSpriteClipsAnim[1].h = 205;
+
+		gSpriteClipsAnim[2].x = 128;
+		gSpriteClipsAnim[2].y = 0;
+		gSpriteClipsAnim[2].w = 64;
+		gSpriteClipsAnim[2].h = 205;
+
+		gSpriteClipsAnim[3].x = 196;
+		gSpriteClipsAnim[3].y = 0;
+		gSpriteClipsAnim[3].w = 64;
+		gSpriteClipsAnim[3].h = 205;
+
+	}
+
+
 
 
 	return (checkLoaded(gKeyPressSurfaces[KEY_PRESS_SURFACE_UP]) && checkLoaded(gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN]) && checkLoaded(gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT]) && checkLoaded(gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT]));
@@ -438,7 +474,7 @@ int main(int argc, char* args[]) {
 
 	bool quit = false;
 
-
+	int frame = 0;
 	SDL_Event e;
 
 	Uint8 r = 255;
@@ -447,16 +483,17 @@ int main(int argc, char* args[]) {
 	Uint8 a = 255;
 	bool isFuckingAroundWithColors = false;
 	bool isFuckingAroundWithTransparency = false;
+	bool isTryingToAnimateShit = false;
 	gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
 
 
 	while (!quit)
 	{
 
-		bool isTexture = false; 
+		bool isTexture = false;
 
+		while (SDL_PollEvent(&e) != 0) {
 
-		while (SDL_PollEvent(&e) != 0)
 			if (e.type == SDL_QUIT)
 				quit = true;
 			else
@@ -560,7 +597,7 @@ int main(int argc, char* args[]) {
 
 
 
-					case SDLK_s: 
+					case SDLK_s:
 						if (!isFuckingAroundWithTransparency) {
 							isTexture = true;
 							SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -613,11 +650,16 @@ int main(int argc, char* args[]) {
 						}
 						break;
 
-					
+
 					case SDLK_a:
 						isFuckingAroundWithTransparency = true;
 						break;
 
+					case SDLK_m:
+						isFuckingAroundWithColors = false;
+						isFuckingAroundWithTransparency = false;
+						isTexture = true;
+						isTryingToAnimateShit = true;
 
 
 					default:
@@ -626,15 +668,6 @@ int main(int argc, char* args[]) {
 						break;
 					}
 
-					if (!isTexture) {
-						SDL_Rect stretchRect;
-						stretchRect.x = 0;
-						stretchRect.y = 0;
-						stretchRect.w = SCREEN_WIDTH;
-						stretchRect.h = SCREEN_HEIGHT;
-						SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &stretchRect); 
-						SDL_UpdateWindowSurface(gWindow);
-					}
 
 					if (isFuckingAroundWithColors) {
 						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -653,14 +686,48 @@ int main(int argc, char* args[]) {
 						gBackgroundAlphaTexture.render(0, 0);
 						gModulatedAlphaTexture.setAlpha(a);
 						gModulatedAlphaTexture.render(0, 0);
-						
 
 						SDL_RenderPresent(gRenderer);
 
 					}
 
-					
+
+
+
+
 				}
+		}
+
+
+
+		if (isTryingToAnimateShit)
+		{
+			SDL_RenderClear(gRenderer);
+
+			SDL_Rect* currentClip = &gSpriteClips[frame / 4];
+			gSpriteSheetAnimTexture.render((SCREEN_WIDTH - currentClip->w) / 2, (SCREEN_HEIGHT - currentClip->h)/2, currentClip);
+
+			SDL_RenderPresent(gRenderer);
+
+			++frame;
+
+			if (frame / 4 >= WALKING_ANIMATION_FRAMES)
+			{
+				frame = 0;
+			}
+			//SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, currentClip);
+			//SDL_UpdateWindowSurface(gWindow);
+		}
+
+		else if (!isTexture) {
+			SDL_Rect stretchRect;
+			stretchRect.x = 0;
+			stretchRect.y = 0;
+			stretchRect.w = SCREEN_WIDTH;
+			stretchRect.h = SCREEN_HEIGHT;
+			//SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &stretchRect);
+			//SDL_UpdateWindowSurface(gWindow);
+		}
 	}
 	close();
 	return 0;
