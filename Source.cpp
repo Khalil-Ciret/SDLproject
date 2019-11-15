@@ -104,6 +104,10 @@ LTexture gSpriteSheetTexture;
 //Modulated texture
 LTexture gModulatedTexture;
 
+//Alpha as fuck textures
+LTexture gModulatedAlphaTexture;
+LTexture gBackgroundAlphaTexture;
+
 LTexture::LTexture()
 {
 	mTexture = NULL;
@@ -161,6 +165,18 @@ void LTexture::free()
 		mWidth = 0;
 		mHeight = 0;
 	}
+}
+
+void LTexture::setBlendMode(SDL_BlendMode blending)
+{
+	//Set blending function
+	SDL_SetTextureBlendMode(mTexture, blending);
+}
+
+void LTexture::setAlpha(Uint8 alpha)
+{
+	//Modulate texture alpha
+	SDL_SetTextureAlphaMod(mTexture, alpha);
 }
 
 void LTexture::setColor(Uint8 red, Uint8 green, Uint8 blue)
@@ -274,8 +290,25 @@ bool loadMedia() {
 		return false;
 	}
 	//Load modulated texture
-	if (!gModulatedTexture.loadFromFile("colors.png")){
+	if (!gModulatedAlphaTexture.loadFromFile("colors.png")){
 		printf("Go fuck yourself, go fuck yourself, please go go fuck yourself");
+	}
+	if (!gModulatedAlphaTexture.loadFromFile("fadeout.png"))
+	{
+		printf("Failed to load front texture!\n");
+		return false;
+	}
+	else
+	{
+		//Set standard alpha blending
+		gModulatedAlphaTexture.setBlendMode(SDL_BLENDMODE_BLEND);
+	}
+
+	//Load background texture
+	if (!gBackgroundAlphaTexture.loadFromFile("fadein.png"))
+	{
+		printf("Failed to load background texture!\n");
+		return false;
 	}
 	else
 	{
@@ -405,18 +438,23 @@ int main(int argc, char* args[]) {
 
 	bool quit = false;
 
+
 	SDL_Event e;
 
 	Uint8 r = 255;
 	Uint8 g = 255;
 	Uint8 b = 255;
-
+	Uint8 a = 255;
+	bool isFuckingAroundWithColors = false;
+	bool isFuckingAroundWithTransparency = false;
 	gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
+
+
 	while (!quit)
 	{
 
 		bool isTexture = false; 
-		bool isFuckingAroundWithColors = false;
+
 
 		while (SDL_PollEvent(&e) != 0)
 			if (e.type == SDL_QUIT)
@@ -427,32 +465,44 @@ int main(int argc, char* args[]) {
 					switch (e.key.keysym.sym)
 					{
 					case SDLK_UP:
+						isFuckingAroundWithColors = false;
+						isFuckingAroundWithTransparency = false;
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_UP];
 						break;
 
 
 					case SDLK_DOWN:
+						isFuckingAroundWithColors = false;
+						isFuckingAroundWithTransparency = false;
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN];
 						break;
 
 					case SDLK_LEFT:
+						isFuckingAroundWithColors = false;
+						isFuckingAroundWithTransparency = false;
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT];
 						break;
 
 					case SDLK_RIGHT:
+						isFuckingAroundWithColors = false;
+						isFuckingAroundWithTransparency = false;
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT];
 						break;
 
 					case SDLK_p:
+						isFuckingAroundWithColors = false;
+						isFuckingAroundWithTransparency = false;
 						isTexture = false;;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_PNG];
 						break;
 
 					case SDLK_t:
+						isFuckingAroundWithColors = false;
+						isFuckingAroundWithTransparency = false;
 						isTexture = true;
 						//Top-right 
 						SDL_Rect topRightViewPort;
@@ -489,7 +539,8 @@ int main(int argc, char* args[]) {
 						break;
 
 					case SDLK_k:
-
+						isFuckingAroundWithColors = false;
+						isFuckingAroundWithTransparency = false;
 						isTexture = true;
 						//Clear the fucking screen
 						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -510,31 +561,64 @@ int main(int argc, char* args[]) {
 
 
 					case SDLK_s: 
-						isTexture = true;
-						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-						SDL_RenderClear(gRenderer);
+						if (!isFuckingAroundWithTransparency) {
+							isTexture = true;
+							SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+							SDL_RenderClear(gRenderer);
 
-						//render top left i guess
-						gSpriteSheetTexture.render(0, 0, &gSpriteClips[0]);
+							//render top left i guess
+							gSpriteSheetTexture.render(0, 0, &gSpriteClips[0]);
 
-						//Render top right sprite
-						gSpriteSheetTexture.render(SCREEN_WIDTH - gSpriteClips[1].w, 0, &gSpriteClips[1]);
+							//Render top right sprite
+							gSpriteSheetTexture.render(SCREEN_WIDTH - gSpriteClips[1].w, 0, &gSpriteClips[1]);
 
-						//Render bottom left sprite
-						gSpriteSheetTexture.render(0, SCREEN_HEIGHT - gSpriteClips[2].h, &gSpriteClips[2]);
+							//Render bottom left sprite
+							gSpriteSheetTexture.render(0, SCREEN_HEIGHT - gSpriteClips[2].h, &gSpriteClips[2]);
 
-						//Render bottom right sprite
-						gSpriteSheetTexture.render(SCREEN_WIDTH - gSpriteClips[3].w, SCREEN_HEIGHT - gSpriteClips[3].h, &gSpriteClips[3]);
+							//Render bottom right sprite
+							gSpriteSheetTexture.render(SCREEN_WIDTH - gSpriteClips[3].w, SCREEN_HEIGHT - gSpriteClips[3].h, &gSpriteClips[3]);
 
-						//Update screen
-						SDL_RenderPresent(gRenderer);
-
+							//Update screen
+							SDL_RenderPresent(gRenderer);
+						}
+						else
+						{
+							if (a - 32 < 0)
+							{
+								a = 0;
+							}
+							else
+							{
+								a -= 32;
+							}
+						}
 						break;
 
 
 					case SDLK_r:
 						isFuckingAroundWithColors = true;
 						r += 32;
+						break;
+
+					case SDLK_w:
+						//Cap if over 255
+						if (a + 32 > 255)
+						{
+							a = 255;
+						}
+						//Increment otherwise
+						else
+						{
+							a += 32;
+						}
+						break;
+
+					
+					case SDLK_a:
+						isFuckingAroundWithTransparency = true;
+						break;
+
+
 
 					default:
 						isTexture = false;
@@ -560,6 +644,19 @@ int main(int argc, char* args[]) {
 						gModulatedTexture.render(0, 0);
 
 						SDL_RenderPresent(gRenderer);
+					}
+
+					if (isFuckingAroundWithTransparency) {
+						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+						SDL_RenderClear(gRenderer);
+
+						gBackgroundAlphaTexture.render(0, 0);
+						gModulatedAlphaTexture.setAlpha(a);
+						gModulatedAlphaTexture.render(0, 0);
+						
+
+						SDL_RenderPresent(gRenderer);
+
 					}
 
 					
