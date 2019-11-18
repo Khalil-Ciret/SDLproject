@@ -44,7 +44,7 @@ public:
 
 	void setAlpha(Uint8 alpha);
 
-	void render(int x, int y, SDL_Rect* clip = NULL);
+	void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
 	int getWidth();
 	int getHeight();
@@ -112,6 +112,9 @@ LTexture gBackgroundAlphaTexture;
 const int WALKING_ANIMATION_FRAMES = 4;
 SDL_Rect gSpriteClipsAnim[WALKING_ANIMATION_FRAMES];
 LTexture gSpriteSheetAnimTexture;
+
+//rotating Stuff
+LTexture gArrowTexture;
 
 LTexture::LTexture()
 {
@@ -189,7 +192,7 @@ void LTexture::setColor(Uint8 red, Uint8 green, Uint8 blue)
 	SDL_SetTextureColorMod(mTexture, red, green, blue);
 }
 
-void LTexture::render(int x, int y, SDL_Rect* clip)
+void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip)
 {
 	SDL_Rect renderQuad = { x,y,mWidth,mHeight };
 
@@ -198,7 +201,7 @@ void LTexture::render(int x, int y, SDL_Rect* clip)
 		renderQuad.w = clip->w;
 		renderQuad.h = clip->h;
 	}
-	SDL_RenderCopy(gRenderer, mTexture, clip, &renderQuad);
+	SDL_RenderCopyEx(gRenderer, mTexture, clip, &renderQuad, angle, center, flip);
 }
 
 int LTexture::getWidth()
@@ -379,6 +382,8 @@ bool loadMedia() {
 
 	}
 
+	//you know what? I don't want to test shit anymore. It's the end of the first part, after all.
+	gArrowTexture.loadFromFile("rotating.png");
 
 
 
@@ -483,6 +488,10 @@ int main(int argc, char* args[]) {
 	int frame = 0;
 	SDL_Event e;
 
+	double degrees = 0;
+
+	SDL_RendererFlip flipType = SDL_FLIP_NONE;
+
 	Uint8 r = 255;
 	Uint8 g = 255;
 	Uint8 b = 255;
@@ -490,6 +499,7 @@ int main(int argc, char* args[]) {
 	bool isFuckingAroundWithColors = false;
 	bool isFuckingAroundWithTransparency = false;
 	bool isTryingToAnimateShit = false;
+	bool youSpinMeRightRound = false;
 	gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
 
 
@@ -512,6 +522,7 @@ int main(int argc, char* args[]) {
 						isFuckingAroundWithTransparency = false;
 						isTryingToAnimateShit = false;
 						isTexture = false;
+						youSpinMeRightRound = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_UP];
 						break;
 
@@ -521,6 +532,7 @@ int main(int argc, char* args[]) {
 						isFuckingAroundWithTransparency = false;
 						isTryingToAnimateShit = false;
 						isTexture = false;
+						youSpinMeRightRound = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN];
 						break;
 
@@ -529,6 +541,7 @@ int main(int argc, char* args[]) {
 						isFuckingAroundWithTransparency = false;
 						isTryingToAnimateShit = false;
 						isTexture = false;
+						youSpinMeRightRound = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT];
 						break;
 
@@ -537,6 +550,7 @@ int main(int argc, char* args[]) {
 						isFuckingAroundWithTransparency = false;
 						isTryingToAnimateShit = false;
 						isTexture = false;
+						youSpinMeRightRound = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT];
 						break;
 
@@ -545,6 +559,7 @@ int main(int argc, char* args[]) {
 						isFuckingAroundWithTransparency = false;
 						isTryingToAnimateShit = false;
 						isTexture = false;;
+						youSpinMeRightRound = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_PNG];
 						break;
 
@@ -553,6 +568,7 @@ int main(int argc, char* args[]) {
 						isFuckingAroundWithTransparency = false;
 						isTryingToAnimateShit = false;
 						isTexture = true;
+						youSpinMeRightRound = false;
 						//Top-right 
 						SDL_Rect topRightViewPort;
 						topRightViewPort.x = SCREEN_WIDTH / 2;
@@ -592,6 +608,7 @@ int main(int argc, char* args[]) {
 						isFuckingAroundWithTransparency = false;
 						isTryingToAnimateShit = false;
 						isTexture = true;
+						youSpinMeRightRound = false;
 						//Clear the fucking screen
 						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 						SDL_RenderClear(gRenderer);
@@ -612,6 +629,7 @@ int main(int argc, char* args[]) {
 
 					case SDLK_s:
 						isTryingToAnimateShit = false;
+						youSpinMeRightRound = false;
 						if (!isFuckingAroundWithTransparency) {
 							isTexture = true;
 							SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -649,11 +667,13 @@ int main(int argc, char* args[]) {
 					case SDLK_r:
 						isFuckingAroundWithColors = true;
 						isTryingToAnimateShit = false;
+						youSpinMeRightRound = false;
 						r += 32;
 						break;
 
 					case SDLK_w:
 						isTryingToAnimateShit = false;
+						youSpinMeRightRound = false;
 						//Cap if over 255
 						if (a + 32 > 255)
 						{
@@ -670,6 +690,7 @@ int main(int argc, char* args[]) {
 					case SDLK_a:
 						isFuckingAroundWithTransparency = true;
 						isTryingToAnimateShit = false;
+						youSpinMeRightRound = false;
 						break;
 
 					case SDLK_m:
@@ -677,12 +698,40 @@ int main(int argc, char* args[]) {
 						isFuckingAroundWithTransparency = false;
 						isTexture = false;
 						isTryingToAnimateShit = true;
-						printf("Now the app is dead but at least let's see shit being animated");
+						youSpinMeRightRound = false;
+						break;
+
+						//rotating time
+
+					case SDLK_y:
+						youSpinMeRightRound = true;
+						degrees -= 60;
+						break;
+
+					case SDLK_u:
+						youSpinMeRightRound = true;
+						degrees += 60;
+						break;
+
+					case SDLK_i:
+						youSpinMeRightRound = true;
+						flipType = SDL_FLIP_HORIZONTAL;
+						break;
+
+					case SDLK_o:
+						youSpinMeRightRound = true;
+						flipType = SDL_FLIP_NONE;
+						break;
+
+					case SDLK_l:
+						youSpinMeRightRound = true;
+						flipType = SDL_FLIP_VERTICAL;
 						break;
 
 					default:
 						isTexture = false;
 						isTryingToAnimateShit = false;
+						youSpinMeRightRound = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
 						break;
 					}
@@ -720,6 +769,16 @@ int main(int argc, char* args[]) {
 						stretchRect.h = SCREEN_HEIGHT;
 						SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &stretchRect);
 						SDL_UpdateWindowSurface(gWindow);
+					}
+
+					if (youSpinMeRightRound) {
+						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+						SDL_RenderClear(gRenderer);
+
+						gArrowTexture.render((SCREEN_WIDTH - gArrowTexture.getWidth()) / 2, (SCREEN_HEIGHT - gArrowTexture.getHeight()) / 2, NULL, degrees, NULL, flipType);
+
+						SDL_RenderPresent(gRenderer);
+
 					}
 
 				}
