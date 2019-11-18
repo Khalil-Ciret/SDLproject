@@ -226,12 +226,18 @@ bool init() {
 	}
 	else
 	{
+		//Set texture filtering to linear 
+		if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1")) {
+			printf("WARNING");
+		}
+
 		gWindow = SDL_CreateWindow("SDL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 		if (gWindow == NULL) {
 			printf("Error %c\n", SDL_GetError);
 			return false;
 		}
 		else {
+
 			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 			if (gRenderer == NULL)
 			{
@@ -504,6 +510,7 @@ int main(int argc, char* args[]) {
 					case SDLK_UP:
 						isFuckingAroundWithColors = false;
 						isFuckingAroundWithTransparency = false;
+						isTryingToAnimateShit = false;
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_UP];
 						break;
@@ -512,6 +519,7 @@ int main(int argc, char* args[]) {
 					case SDLK_DOWN:
 						isFuckingAroundWithColors = false;
 						isFuckingAroundWithTransparency = false;
+						isTryingToAnimateShit = false;
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DOWN];
 						break;
@@ -519,6 +527,7 @@ int main(int argc, char* args[]) {
 					case SDLK_LEFT:
 						isFuckingAroundWithColors = false;
 						isFuckingAroundWithTransparency = false;
+						isTryingToAnimateShit = false;
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_LEFT];
 						break;
@@ -526,6 +535,7 @@ int main(int argc, char* args[]) {
 					case SDLK_RIGHT:
 						isFuckingAroundWithColors = false;
 						isFuckingAroundWithTransparency = false;
+						isTryingToAnimateShit = false;
 						isTexture = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_RIGHT];
 						break;
@@ -533,6 +543,7 @@ int main(int argc, char* args[]) {
 					case SDLK_p:
 						isFuckingAroundWithColors = false;
 						isFuckingAroundWithTransparency = false;
+						isTryingToAnimateShit = false;
 						isTexture = false;;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_PNG];
 						break;
@@ -540,6 +551,7 @@ int main(int argc, char* args[]) {
 					case SDLK_t:
 						isFuckingAroundWithColors = false;
 						isFuckingAroundWithTransparency = false;
+						isTryingToAnimateShit = false;
 						isTexture = true;
 						//Top-right 
 						SDL_Rect topRightViewPort;
@@ -578,6 +590,7 @@ int main(int argc, char* args[]) {
 					case SDLK_k:
 						isFuckingAroundWithColors = false;
 						isFuckingAroundWithTransparency = false;
+						isTryingToAnimateShit = false;
 						isTexture = true;
 						//Clear the fucking screen
 						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -598,6 +611,7 @@ int main(int argc, char* args[]) {
 
 
 					case SDLK_s:
+						isTryingToAnimateShit = false;
 						if (!isFuckingAroundWithTransparency) {
 							isTexture = true;
 							SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -634,10 +648,12 @@ int main(int argc, char* args[]) {
 
 					case SDLK_r:
 						isFuckingAroundWithColors = true;
+						isTryingToAnimateShit = false;
 						r += 32;
 						break;
 
 					case SDLK_w:
+						isTryingToAnimateShit = false;
 						//Cap if over 255
 						if (a + 32 > 255)
 						{
@@ -653,20 +669,25 @@ int main(int argc, char* args[]) {
 
 					case SDLK_a:
 						isFuckingAroundWithTransparency = true;
+						isTryingToAnimateShit = false;
 						break;
 
 					case SDLK_m:
 						isFuckingAroundWithColors = false;
 						isFuckingAroundWithTransparency = false;
-						isTexture = true;
+						isTexture = false;
 						isTryingToAnimateShit = true;
-
+						printf("Now the app is dead but at least let's see shit being animated");
+						break;
 
 					default:
 						isTexture = false;
+						isTryingToAnimateShit = false;
 						gCurrentSurface = gKeyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
 						break;
 					}
+
+
 
 
 					if (isFuckingAroundWithColors) {
@@ -691,26 +712,35 @@ int main(int argc, char* args[]) {
 
 					}
 
-
-
-
+					if (!isTexture) {
+						SDL_Rect stretchRect;
+						stretchRect.x = 0;
+						stretchRect.y = 0;
+						stretchRect.w = SCREEN_WIDTH;
+						stretchRect.h = SCREEN_HEIGHT;
+						SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &stretchRect);
+						SDL_UpdateWindowSurface(gWindow);
+					}
 
 				}
+
 		}
-
-
-
 		if (isTryingToAnimateShit)
 		{
+			SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 			SDL_RenderClear(gRenderer);
 
-			SDL_Rect* currentClip = &gSpriteClips[frame / 4];
-			gSpriteSheetAnimTexture.render((SCREEN_WIDTH - currentClip->w) / 2, (SCREEN_HEIGHT - currentClip->h)/2, currentClip);
+			//Render current frame
+			SDL_Rect* currentClip = &gSpriteClipsAnim[frame / 4];
+			gSpriteSheetAnimTexture.render((SCREEN_WIDTH - currentClip->w) / 2, (SCREEN_HEIGHT - currentClip->h) / 2, currentClip);
 
+			//Update screen
 			SDL_RenderPresent(gRenderer);
 
+			//Go to next frame
 			++frame;
 
+			//Cycle animation
 			if (frame / 4 >= WALKING_ANIMATION_FRAMES)
 			{
 				frame = 0;
@@ -719,15 +749,7 @@ int main(int argc, char* args[]) {
 			//SDL_UpdateWindowSurface(gWindow);
 		}
 
-		else if (!isTexture) {
-			SDL_Rect stretchRect;
-			stretchRect.x = 0;
-			stretchRect.y = 0;
-			stretchRect.w = SCREEN_WIDTH;
-			stretchRect.h = SCREEN_HEIGHT;
-			//SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &stretchRect);
-			//SDL_UpdateWindowSurface(gWindow);
-		}
+	
 	}
 	close();
 	return 0;
